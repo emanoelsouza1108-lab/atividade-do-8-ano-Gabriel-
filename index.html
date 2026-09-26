@@ -1,1 +1,588 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atividade do 8º Ano</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #111827, #1e3a8a);
+  color: white;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: rgba(255,255,255,0.10);
+  border-radius: 20px;
+  padding: 25px;
+  margin-top: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.start {
+  background: #22c55e;
+  color: white;
+  font-weight: bold;
+}
+
+.answer {
+  background: white;
+  color: #111827;
+  text-align: left;
+}
+
+.answer.selected {
+  background: #f59e0b;
+  color: white;
+}
+
+.next {
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+}
+
+.texto {
+  background: rgba(0,0,0,.25);
+  padding: 15px;
+  border-radius: 12px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+#quiz,
+#result {
+  display: none;
+}
+
+.progress {
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.result-score {
+  font-size: 42px;
+  text-align: center;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card" id="start">
+    <h1>📚 Atividade do 8º Ano</h1>
+    <p style="text-align:center;">
+      40 questões — Português e Matemática
+    </p>
+    <button class="start" onclick="startQuiz()">
+      🚀 Entrar na atividade
+    </button>
+  </div>
+
+  <div class="card" id="quiz">
+    <div class="progress" id="progress"></div>
+    <h2 id="question"></h2>
+    <div id="texto"></div>
+    <div id="answers"></div>
+    <button class="next" id="next" onclick="nextQuestion()" disabled>
+      Próxima questão ➡️
+    </button>
+  </div>
+
+  <div class="card" id="result">
+    <h1>🏁 Resultado</h1>
+    <div class="result-score" id="score"></div>
+    <h2 id="message"></h2>
+    <button class="start" onclick="restartQuiz()">
+      🔄 Recomeçar
+    </button>
+  </div>
+
+</div>
+
+<script>
+
+const questions = [
+
+/* PORTUGUÊS */
+
+{
+q:"1. Qual é a principal ideia apresentada no texto?",
+a:[
+"A organização não é importante para estudar.",
+"A organização e a revisão podem contribuir para uma aprendizagem mais sólida.",
+"Estudar serve apenas para fazer provas.",
+"Os alunos não gostam de estudar."
+], c:1
+},
+
+{
+q:"2. O que alguns alunos acharam difícil no começo?",
+a:[
+"Organizar os livros.",
+"Fazer perguntas.",
+"Manter a rotina de estudos.",
+"Usar o mural."
+], c:2
+},
+
+{
+q:"3. Na expressão “reservar alguns minutos”, a palavra “minutos” indica:",
+a:[
+"tempo.",
+"lugar.",
+"modo.",
+"causa."
+], c:0
+},
+
+{
+q:"4. Na frase “pequenas atitudes faziam diferença”, a palavra “atitudes” se refere a:",
+a:[
+"ações ou comportamentos.",
+"lugares.",
+"objetos.",
+"horários."
+], c:0
+},
+
+{
+q:"5. Segundo o texto, qual atitude ajuda na aprendizagem?",
+a:[
+"Memorizar tudo sem compreender.",
+"Evitar corrigir erros.",
+"Comparar ideias e explicar conteúdos.",
+"Estudar somente antes das provas."
+], c:2
+},
+
+{
+q:"6. Qual palavra poderia substituir “No começo” mantendo a ideia de contraste?",
+a:[
+"porque",
+"entretanto",
+"portanto",
+"também"
+], c:1
+},
+
+{
+q:"7. Em “O grupo de estudantes decidiu transformar uma sala”, o sujeito é:",
+a:[
+"o grupo de estudantes.",
+"uma sala.",
+"uma escola.",
+"os livros."
+], c:0
+},
+
+{
+q:"8. Qual é a finalidade principal do texto?",
+a:[
+"Informar e refletir sobre hábitos de estudo.",
+"Contar uma história de aventura.",
+"Ensinar uma receita.",
+"Descrever uma cidade."
+], c:0
+},
+
+{
+q:"9. Qual frase apresenta uma relação de causa?",
+a:[
+"Os estudantes organizaram os livros.",
+"Melhoraram porque revisaram o conteúdo.",
+"A turma criou um mural.",
+"Eles estudavam em silêncio."
+], c:1
+},
+
+{
+q:"10. Na expressão “durante todo o processo”, a palavra “durante” indica:",
+a:[
+"tempo.",
+"lugar.",
+"oposição.",
+"conclusão."
+], c:0
+},
+
+{
+q:"11. Em “A turma também descobriu”, o sujeito é:",
+a:[
+"o espaço.",
+"a turma.",
+"o processo.",
+"o conteúdo."
+], c:1
+},
+
+{
+q:"12. Qual palavra apresenta sentido semelhante a “sólida” no contexto do texto?",
+a:[
+"rápida.",
+"consistente.",
+"pequena.",
+"difícil."
+], c:1
+},
+
+{
+q:"13. Qual ação aconteceu no texto?",
+a:[
+"Os alunos abandonaram os estudos.",
+"Os estudantes deixaram de revisar.",
+"Os estudantes organizaram o material.",
+"A turma fechou a sala."
+], c:2
+},
+
+{
+q:"14. Na expressão “pequenas atitudes”, a palavra “pequenas” é:",
+a:[
+"substantivo.",
+"verbo.",
+"adjetivo.",
+"pronome."
+], c:2
+},
+
+{
+q:"15. A palavra “estudar” é classificada como:",
+a:[
+"infinitivo.",
+"substantivo.",
+"adjetivo.",
+"advérbio."
+], c:0
+},
+
+{
+q:"16. A expressão “faziam diferença” apresenta:",
+a:[
+"linguagem figurada.",
+"uma pergunta.",
+"uma ordem.",
+"uma comparação explícita."
+], c:0
+},
+
+{
+q:"17. O texto apresenta principalmente uma relação de:",
+a:[
+"adição e contraste de ideias.",
+"causa e consequência apenas.",
+"pergunta e resposta.",
+"tempo e lugar."
+], c:0
+},
+
+{
+q:"18. Em “antes de começar”, a palavra “antes” indica:",
+a:[
+"tempo.",
+"lugar.",
+"modo.",
+"quantidade."
+], c:0
+},
+
+{
+q:"19. Qual informação está de acordo com o texto?",
+a:[
+"A revisão fazia parte do processo de aprendizagem.",
+"Os estudantes estudavam somente antes das provas.",
+"A turma não organizou os materiais.",
+"Os alunos abandonaram a rotina."
+], c:0
+},
+
+{
+q:"20. Qual seria um título adequado para o texto?",
+a:[
+"Uma rotina que ajuda a aprender",
+"A sala abandonada",
+"Uma competição escolar",
+"Os livros perdidos"
+], c:0
+},
+
+/* MATEMÁTICA */
+
+{
+q:"21. Quanto é 15 + 10?",
+a:["20","25","30","35"], c:1
+},
+
+{
+q:"22. Qual é o resultado de 36 ÷ 6?",
+a:["4","5","6","7"], c:2
+},
+
+{
+q:"23. Qual fração é equivalente a 3/4?",
+a:["6/8","5/8","4/6","3/8"], c:0
+},
+
+{
+q:"24. Uma camiseta custa R$ 80 e recebeu um desconto de R$ 20. Qual é o novo preço?",
+a:["R$ 40","R$ 60","R$ 70","R$ 100"], c:1
+},
+
+{
+q:"25. Qual é o resultado de 3 × 4?",
+a:["7","10","12","14"], c:2
+},
+
+{
+q:"26. Qual é o resultado de 5 + 8?",
+a:["11","12","13","14"], c:2
+},
+
+{
+q:"27. Um retângulo possui 8 cm de comprimento e 5 cm de largura. Qual é sua área?",
+a:["13 cm²","26 cm²","40 cm²","80 cm²"], c:2
+},
+
+{
+q:"28. Qual é o perímetro de um quadrado com lado de 7 cm?",
+a:["14 cm","21 cm","28 cm","49 cm"], c:2
+},
+
+{
+q:"29. Qual das frações abaixo é maior?",
+a:["1/6","5/6","2/6","3/6"], c:1
+},
+
+{
+q:"30. Qual é o resultado de 5 - 7?",
+a:["−2","2","−12","12"], c:0
+},
+
+{
+q:"31. Quanto é 3 × 5?",
+a:["8","10","15","20"], c:2
+},
+
+{
+q:"32. Qual é a raiz quadrada de 64?",
+a:["6","8","10","12"], c:1
+},
+
+{
+q:"33. Quanto é 10% de 300?",
+a:["10","20","30","40"], c:2
+},
+
+{
+q:"34. Qual expressão representa “o dobro de x mais 5”?",
+a:["x + 5","2x + 5","2 + x","5x + 2"], c:1
+},
+
+{
+q:"35. Um triângulo possui ângulos de 60°, 70° e 50°. Qual é o menor ângulo?",
+a:["60°","50°","70°","80°"], c:1
+},
+
+{
+q:"36. Qual é o resultado de 48 ÷ 4?",
+a:["8","10","12","14"], c:2
+},
+
+{
+q:"37. Um produto custa R$ 70 e recebeu desconto de R$ 21. Qual será o preço final?",
+a:["R$ 49","R$ 51","R$ 59","R$ 91"], c:0
+},
+
+{
+q:"38. Qual é o resultado de 12 ÷ 4?",
+a:["2","3","4","6"], c:1
+},
+
+{
+q:"39. Qual fração representa 3 partes de um total de 8 partes?",
+a:["3/5","3/8","5/8","8/3"], c:1
+},
+
+{
+q:"40. Um cubo possui aresta de 3 cm. Qual é seu volume?",
+a:["9 cm³","18 cm³","27 cm³","36 cm³"], c:2
+}
+
+];
+
+let current = 0;
+let score = 0;
+let selected = null;
+
+function startQuiz() {
+  document.getElementById("start").style.display = "none";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+
+  current = 0;
+  score = 0;
+
+  showQuestion();
+}
+
+function showQuestion() {
+
+  selected = null;
+
+  const item = questions[current];
+
+  document.getElementById("progress").innerText =
+    "Questão " + (current + 1) + " de " + questions.length;
+
+  document.getElementById("question").innerText = item.q;
+
+  const texto = document.getElementById("texto");
+
+  if (current === 0) {
+
+    texto.innerHTML = `
+      <div class="texto">
+      Em uma escola, um grupo de estudantes decidiu transformar uma sala pouco utilizada em um espaço de estudos.
+      Eles organizaram os livros por assunto, criaram um mural com metas semanais e combinaram horários para estudar em silêncio.
+      No começo, alguns alunos acharam difícil manter a rotina.
+      Com o passar das semanas, perceberam que pequenas atitudes faziam diferença:
+      separar o material antes de começar, dividir tarefas maiores em etapas e reservar alguns minutos para revisar o que havia sido aprendido.
+      <br><br>
+      A turma também descobriu que estudar não significa apenas memorizar informações.
+      Fazer perguntas, comparar ideias, explicar um conteúdo com as próprias palavras e corrigir os próprios erros ajudam a construir uma aprendizagem mais sólida.
+      Assim, o espaço de estudos passou a ser usado não apenas antes das provas, mas durante todo o processo de aprendizagem.
+      </div>
+    `;
+
+  } else {
+    texto.innerHTML = "";
+  }
+
+  const answers = document.getElementById("answers");
+  answers.innerHTML = "";
+
+  item.a.forEach((answer, index) => {
+
+    const button = document.createElement("button");
+
+    button.className = "answer";
+    button.innerText =
+      String.fromCharCode(65 + index) + ") " + answer;
+
+    button.onclick = function() {
+      selectAnswer(index, button);
+    };
+
+    answers.appendChild(button);
+  });
+
+  document.getElementById("next").disabled = true;
+
+  if (current === questions.length - 1) {
+    document.getElementById("next").innerText =
+      "Finalizar atividade 🏁";
+  } else {
+    document.getElementById("next").innerText =
+      "Próxima questão ➡️";
+  }
+}
+
+function selectAnswer(index, button) {
+
+  if (selected !== null) return;
+
+  selected = index;
+
+  document.querySelectorAll(".answer").forEach(btn => {
+    btn.disabled = true;
+  });
+
+  button.classList.add("selected");
+
+  document.getElementById("next").disabled = false;
+}
+
+function nextQuestion() {
+
+  if (selected === null) return;
+
+  if (selected === questions[current].c) {
+    score++;
+  }
+
+  current++;
+
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("result").style.display = "block";
+
+  document.getElementById("score").innerText =
+    score + " / 40";
+
+  if (score >= 20) {
+
+    document.getElementById("message").innerText =
+      "🎉 Meta atingida! Parabéns!";
+
+  } else {
+
+    document.getElementById("message").innerText =
+      "📖 Meta não atingida. Tente novamente!";
+  }
+}
+
+function restartQuiz() {
+
+  document.getElementById("result").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+
+  current = 0;
+  score = 0;
+
+  showQuestion();
+}
+
+</script>
+
+</body>
+</html>
