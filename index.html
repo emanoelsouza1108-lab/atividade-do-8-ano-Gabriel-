@@ -46,8 +46,7 @@ hr{border:0;border-top:1px solid #cbd5e1;margin:22px 0}
 <h1>📚 Atividade do 8º Ano</h1>
 <p>40 questões: 20 de Português e 20 de Matemática.</p>
 <p class="small">
-Escolha uma alternativa. Você não verá se acertou ou errou durante a atividade.
-A pontuação aparece somente no final.
+Escolha uma alternativa e, se quiser, troque para outra. Quando tiver certeza, confirme a resposta. Depois de confirmada, ela não poderá mais ser alterada.
 </p>
 <button class="next" onclick="begin()">🚀 Entrar na atividade</button>
 </section>
@@ -58,7 +57,11 @@ A pontuação aparece somente no final.
 <span class="pill" id="count"></span>
 </div>
 <div id="questionBox"></div>
-<div style="display:flex;gap:10px;margin-top:12px"><button class="next" id="back" onclick="goBack()" disabled style="flex:1">⬅️ Voltar</button><button class="next" id="next" disabled onclick="goNext()" style="flex:2">Próxima questão</button></div>
+<div id="answerActions" style="margin-top:14px">
+<button class="next" id="confirm" onclick="confirmAnswer()" disabled>✅ Confirmar resposta</button>
+<div id="feedback" style="min-height:28px;margin-top:10px;font-weight:800"></div>
+</div>
+<div style="display:flex;gap:10px;margin-top:12px"><button class="next" id="next" disabled onclick="goNext()" style="flex:2">Próxima questão</button></div>
 </section>
 
 <section id="result" class="card hidden"></section>
@@ -96,14 +99,14 @@ const qs = [
 ["Matemática","22. Um número aumentado em 20% passa a ser 72. O número original era:",["58","60","62","64"],1],
 ["Matemática","23. Qual fração é equivalente a 5/6 − 1/4?",["7/12","8/12","9/12","10/12"],0],
 ["Matemática","24. Um produto de R$ 200 recebe 15% de desconto e, depois, mais 10% sobre o preço já descontado. O preço final é:",["R$ 150","R$ 153","R$ 155","R$ 160"],1],
-["Matemática","25. Em uma turma de 32 alunos, 3/8 faltaram. Quantos compareceram?",["20","21","24","26"],2],
+["Matemática","25. Em uma turma de 32 alunos, 3/8 faltaram. Quantos compareceram?",["20","21","24","26"],0],
 ["Matemática","26. Resolva 5x − 2 = 3x + 14.",["7","8","9","10"],1],
 ["Matemática","27. Um retângulo tem perímetro 50 cm e comprimento 3 cm maior que a largura. Sua área é:",["144 cm²","150 cm²","154 cm²","160 cm²"],2],
 ["Matemática","28. Um quadrado possui área de 196 cm². Se o lado aumentar 2 cm, a nova área será:",["216 cm²","224 cm²","225 cm²","228 cm²"],2],
-["Matemática","29. Qual número é o maior?",["0,605","0,61","3/5","61/100"],1],
+["Matemática","29. Qual número é o maior?",["0,605","0,61","3/5","0,609"],1],
 ["Matemática","30. Um saldo de −R$ 35 recebe um depósito de R$ 80 e depois uma retirada de R$ 27. O saldo final é:",["R$ 17","R$ 18","R$ 28","R$ 38"],2],
-["Matemática","31. Se f(x) = 2x² − 3, então f(−2) é:",["5","7","8","11"],3],
-["Matemática","32. O resultado de (−2)³ + 5² − 6 é:",["1","3","5","11"],1],
+["Matemática","31. Se f(x) = 2x² − 3, então f(−2) é:",["5","7","8","11"],0],
+["Matemática","32. O resultado de (−2)³ + 5² − 6 é:",["1","3","5","11"],3],
 ["Matemática","33. Um preço de R$ 240 aumenta 12,5%. O novo preço é:",["R$ 265","R$ 268","R$ 270","R$ 272"],2],
 ["Matemática","34. “A metade da diferença entre x e 6” corresponde a:",["(x − 6)/2","x/2 − 6","(x + 6)/2","x − 3"],0],
 ["Matemática","35. Dois ângulos são suplementares. Um mede 4x + 10° e o outro 2x − 10°. O valor de x é:",["25","30","35","40"],1],
@@ -111,23 +114,35 @@ const qs = [
 ["Matemática","37. Um cubo tem volume de 343 cm³. Sua aresta mede:",["6 cm","7 cm","8 cm","9 cm"],1],
 ["Matemática","38. R$ 360 são divididos na razão 2:3:4. A maior parte corresponde a:",["R$ 140","R$ 150","R$ 160","R$ 180"],2],
 ["Matemática","39. Um aluno acertou 72% de uma prova com 50 questões. Quantas questões ele errou?",["12","13","14","15"],2],
-["Matemática","40. Um número multiplicado por 4 e diminuído de 9 resulta no dobro desse número mais 7. O número é:",["7","8","9","10"],2]
+["Matemática","40. Um número multiplicado por 4 e diminuído de 9 resulta no dobro desse número mais 7. O número é:",["7","8","9","10"],1]
 ];
-
 
 let i=0, score=0, chosen=null;
 const answers=[];
 
+// Cada questão tem 3 estados:
+// 1) nenhuma opção escolhida;
+// 2) opção escolhida, mas ainda pode trocar;
+// 3) resposta confirmada e bloqueada.
+const confirmed = [];
+
 function begin(){
-  i=0; score=0; chosen=null; answers.length=0;
+  i=0;
+  score=0;
+  chosen=null;
+  answers.length=0;
+  confirmed.length=0;
   document.getElementById('start').classList.add('hidden');
+  document.getElementById('result').classList.add('hidden');
   document.getElementById('quiz').classList.remove('hidden');
   render();
 }
 
 function render(){
   chosen = answers[i] ?? null;
+  const locked = confirmed[i] === true;
   const q=qs[i];
+
   document.getElementById('part').textContent=q[0];
   document.getElementById('count').textContent=(i+1)+' / 40';
 
@@ -149,40 +164,98 @@ function render(){
 
   q[2].forEach((a,n)=>{
     const b=document.createElement('button');
+    b.type='button';
     b.className='opt';
-    b.textContent=a;
+    b.textContent=String.fromCharCode(65+n)+') '+a;
+
     if(chosen===n) b.classList.add('sel');
-    b.onclick=()=>choose(b,n);
-    if(chosen!==null) b.disabled=true;
+
+    // Antes de confirmar: pode trocar de alternativa.
+    // Depois de confirmar: tudo fica bloqueado.
+    b.disabled = locked;
+    b.onclick=()=>choose(n);
     box.appendChild(b);
   });
 
-  document.getElementById('back').disabled = i===0;
+  const confirmBtn=document.getElementById('confirm');
+  const feedback=document.getElementById('feedback');
   const next=document.getElementById('next');
-  next.disabled=chosen===null;
+
+  if(locked){
+    confirmBtn.disabled=true;
+    confirmBtn.style.display='none';
+    feedback.textContent = chosen===q[3]
+      ? '✅ Você acertou a questão!'
+      : '❌ Você errou a questão.';
+    feedback.style.color = chosen===q[3] ? '#15803d' : '#b91c1c';
+  }else{
+    confirmBtn.disabled=(chosen===null);
+    confirmBtn.style.display='inline-block';
+    feedback.textContent = chosen===null
+      ? 'Escolha uma alternativa. Você pode trocar antes de confirmar.'
+      : 'Resposta selecionada. Ainda dá para trocar.';
+    feedback.style.color='#475569';
+  }
+
+  // Só pode avançar depois da confirmação.
+  next.disabled=!locked;
   next.textContent=i===39?'Ver resultado':'Próxima questão';
 }
 
-function choose(btn,n){
-  if(chosen!==null)return;
+function choose(n){
+  // Se já confirmou, não pode alterar.
+  if(confirmed[i]) return;
+
   chosen=n;
   answers[i]=n;
-  btn.classList.add('sel');
-  document.querySelectorAll('.opt').forEach(x=>x.disabled=true);
+
+  // Apenas troca o destaque; não verifica ainda.
+  document.querySelectorAll('.opt').forEach((b,index)=>{
+    b.classList.toggle('sel', index===n);
+  });
+
+  document.getElementById('confirm').disabled=false;
+  const feedback=document.getElementById('feedback');
+  feedback.textContent='Resposta selecionada. Ainda dá para trocar.';
+  feedback.style.color='#475569';
+}
+
+function confirmAnswer(){
+  if(chosen===null || confirmed[i]) return;
+
+  // A partir daqui a resposta fica definitiva.
+  confirmed[i]=true;
+  answers[i]=chosen;
+
+  const q=qs[i];
+  const acertou=(chosen===q[3]);
+  const feedback=document.getElementById('feedback');
+
+  feedback.textContent=acertou
+    ? '✅ Você acertou a questão!'
+    : '❌ Você errou a questão.';
+  feedback.style.color=acertou ? '#15803d' : '#b91c1c';
+
+  document.querySelectorAll('.opt').forEach((b,index)=>{
+    b.disabled=true;
+    b.classList.toggle('sel', index===chosen);
+  });
+
+  document.getElementById('confirm').disabled=true;
+  document.getElementById('confirm').style.display='none';
   document.getElementById('next').disabled=false;
 }
 
 function goNext(){
-  if(chosen===null)return;
-  i++;
-  if(i<qs.length) render();
-  else finish();
-}
+  // Nunca avança sem confirmar.
+  if(!confirmed[i]) return;
 
-function goBack(){
-  if(i===0)return;
-  i--;
-  render();
+  if(i<qs.length-1){
+    i++;
+    render();
+  }else{
+    finish();
+  }
 }
 
 function finish(){
@@ -190,7 +263,10 @@ function finish(){
   const r=document.getElementById('result');
   r.classList.remove('hidden');
 
-  score=answers.reduce((total,ans,n)=>total+(ans===qs[n][3]?1:0),0);
+  score=answers.reduce((total,ans,n)=>{
+    return total+(ans===qs[n][3]?1:0);
+  },0);
+
   const ok=score>=20;
   r.innerHTML=
     '<h1>🏁 Resultado</h1>'+
@@ -206,97 +282,13 @@ function finish(){
 function restart(){
   i=0;
   score=0;
+  chosen=null;
+  answers.length=0;
+  confirmed.length=0;
   document.getElementById('result').classList.add('hidden');
   document.getElementById('quiz').classList.remove('hidden');
   render();
 }
-</script>
-
-<script>
-(function () {
-  let confirmed = false;
-
-  function getOptionElements() {
-    return Array.from(document.querySelectorAll(
-      '.option, .answer, .choice, .option-btn, button[data-option], input[type="radio"]'
-    ));
-  }
-
-  // Selection is reversible until confirmation.
-  document.addEventListener('click', function (e) {
-    const el = e.target.closest('.option, .answer, .choice, .option-btn, button[data-option]');
-    if (!el || confirmed) return;
-
-    const group = el.parentElement;
-    const siblings = group ? Array.from(group.children) : [];
-    siblings.forEach(x => x.classList && x.classList.remove('selected'));
-    el.classList.add('selected');
-
-    window.selectedAnswer = el.dataset.option ?? el.dataset.index ?? el.textContent.trim();
-    const fb = document.getElementById('answer-feedback');
-    if (fb) {
-      fb.textContent = 'Resposta selecionada. Você pode trocar antes de confirmar.';
-      fb.style.color = '';
-    }
-  });
-
-  window.confirmAnswer = function () {
-    if (confirmed) return;
-
-    const selected =
-      document.querySelector('.option.selected, .answer.selected, .choice.selected, .option-btn.selected, button[data-option].selected');
-
-    const fb = document.getElementById('answer-feedback');
-    if (!selected) {
-      if (fb) fb.textContent = '⚠️ Escolha uma alternativa antes de confirmar.';
-      return;
-    }
-
-    confirmed = true;
-
-    // Try to determine the selected index from common attributes/classes.
-    let selectedIndex = selected.dataset.index;
-    if (selectedIndex == null) selectedIndex = selected.dataset.optionIndex;
-
-    // If the original app exposes a current question object, use its answer field.
-    let correctIndex = null;
-    const q = window.qs && window.qs[window.currentQuestion ?? window.current ?? 0];
-    if (q) correctIndex = q.answer ?? q.correct ?? q.correctIndex;
-
-    if (selectedIndex != null && correctIndex != null) {
-      const ok = Number(selectedIndex) === Number(correctIndex);
-      if (fb) fb.textContent = ok ? '✅ Você acertou!' : '❌ Você errou. Tente novamente.';
-    } else {
-      // Fallback: preserve the page's existing answer-checking function if available.
-      if (typeof window.checkAnswer === 'function') {
-        try { window.checkAnswer(selected); } catch (_) {}
-      } else if (fb) {
-        fb.textContent = '✅ Resposta confirmada!';
-      }
-    }
-
-    const btn = document.getElementById('confirm-btn');
-    if (btn) {
-      btn.disabled = true;
-      btn.style.opacity = '0.6';
-      btn.style.cursor = 'default';
-    }
-  };
-
-  // Reset confirmation whenever a new question is rendered.
-  const originalRender = window.renderQuestion;
-  if (typeof originalRender === 'function') {
-    window.renderQuestion = function () {
-      confirmed = false;
-      window.selectedAnswer = null;
-      const fb = document.getElementById('answer-feedback');
-      const btn = document.getElementById('confirm-btn');
-      if (fb) fb.textContent = '';
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
-      return originalRender.apply(this, arguments);
-    };
-  }
-})();
 </script>
 
 </body>
