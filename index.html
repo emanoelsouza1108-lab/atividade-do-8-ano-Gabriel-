@@ -211,5 +211,93 @@ function restart(){
   render();
 }
 </script>
+
+<script>
+(function () {
+  let confirmed = false;
+
+  function getOptionElements() {
+    return Array.from(document.querySelectorAll(
+      '.option, .answer, .choice, .option-btn, button[data-option], input[type="radio"]'
+    ));
+  }
+
+  // Selection is reversible until confirmation.
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('.option, .answer, .choice, .option-btn, button[data-option]');
+    if (!el || confirmed) return;
+
+    const group = el.parentElement;
+    const siblings = group ? Array.from(group.children) : [];
+    siblings.forEach(x => x.classList && x.classList.remove('selected'));
+    el.classList.add('selected');
+
+    window.selectedAnswer = el.dataset.option ?? el.dataset.index ?? el.textContent.trim();
+    const fb = document.getElementById('answer-feedback');
+    if (fb) {
+      fb.textContent = 'Resposta selecionada. Você pode trocar antes de confirmar.';
+      fb.style.color = '';
+    }
+  });
+
+  window.confirmAnswer = function () {
+    if (confirmed) return;
+
+    const selected =
+      document.querySelector('.option.selected, .answer.selected, .choice.selected, .option-btn.selected, button[data-option].selected');
+
+    const fb = document.getElementById('answer-feedback');
+    if (!selected) {
+      if (fb) fb.textContent = '⚠️ Escolha uma alternativa antes de confirmar.';
+      return;
+    }
+
+    confirmed = true;
+
+    // Try to determine the selected index from common attributes/classes.
+    let selectedIndex = selected.dataset.index;
+    if (selectedIndex == null) selectedIndex = selected.dataset.optionIndex;
+
+    // If the original app exposes a current question object, use its answer field.
+    let correctIndex = null;
+    const q = window.qs && window.qs[window.currentQuestion ?? window.current ?? 0];
+    if (q) correctIndex = q.answer ?? q.correct ?? q.correctIndex;
+
+    if (selectedIndex != null && correctIndex != null) {
+      const ok = Number(selectedIndex) === Number(correctIndex);
+      if (fb) fb.textContent = ok ? '✅ Você acertou!' : '❌ Você errou. Tente novamente.';
+    } else {
+      // Fallback: preserve the page's existing answer-checking function if available.
+      if (typeof window.checkAnswer === 'function') {
+        try { window.checkAnswer(selected); } catch (_) {}
+      } else if (fb) {
+        fb.textContent = '✅ Resposta confirmada!';
+      }
+    }
+
+    const btn = document.getElementById('confirm-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'default';
+    }
+  };
+
+  // Reset confirmation whenever a new question is rendered.
+  const originalRender = window.renderQuestion;
+  if (typeof originalRender === 'function') {
+    window.renderQuestion = function () {
+      confirmed = false;
+      window.selectedAnswer = null;
+      const fb = document.getElementById('answer-feedback');
+      const btn = document.getElementById('confirm-btn');
+      if (fb) fb.textContent = '';
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+      return originalRender.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
